@@ -1,0 +1,61 @@
+<!-- 親となるテンプレートを継承 -->
+{% extends "layout.html" %}
+
+<!-- 
+*
+*  カラム右のコンテンツ
+*
+ -->
+
+
+<!-- 
+*
+*  カラム左のコンテンツ
+*
+ -->
+{% block right %}
+
+    {% for entry in entries %}
+        <div class="media">
+            <div class="media-left">
+                <p>{{ entry.day }}</p>
+            </div>
+            <!-- エントリ一覧の表示 -->
+            <div class="media-body">
+                <ul>
+                    <!-- エントリが存在するとき -->
+                    <li>
+                        <h2 class="media-heading">1 {{ entry.title }}</h2>
+
+                        <p>2 {{ entry.why }}</p>
+
+                        <p>3 {{ entry.method }}</p>
+
+                        <p>4 {{ entry.result }}</p>
+
+                        <p>5 {{ entry.discusion }}</p>
+
+                        <p>6 {{ entry.conclusion }}</p>
+
+                        <p>7 {{ entry.day }}</p>
+
+                        <p>id: {{ entry.id }}</p>
+                        <p>parent: {{ entry.parent }}</p>
+                        <p>level: {{ entry.level }}</p>
+                        <!-- 削除機能の追加 -->
+                        <form action="{{ url_for('rm_entry') }}" method="post" class="rm-entry">
+                            <dl>
+                                <dd><input type="hidden" name="id" value="{{ entry.id }}"></dd>
+                                <dd><input type="submit" value="削除">
+                                </dd>
+                            </dl>
+                        </form>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    {% else %}
+        <!-- エントリが存在しない時 -->
+        <li><em>エントリーはまだなにもない…</em>
+    {% endfor %}
+{% endblock right %}

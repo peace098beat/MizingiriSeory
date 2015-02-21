@@ -1,0 +1,197 @@
+{% extends "bootstrap/base.html" %}
+<!-- 今回の親となるテンプレート -->
+{% block title %}Flaskr{% endblock title %}
+<!-- 静的ファイルフォルダからCSSを読み込む -->
+{%- block styles %}
+    {{ super() }}
+    <link rel=stylesheet type=text/css href="{{ url_for('static', filename='style.css') }}">
+    <script src="http://d3js.org/d3.v2.js"></script>
+{%- endblock styles %}
+
+{% block navbar %}
+    <div class="navbar navbar-default">
+
+        <h1>Flaskr</h1>
+
+        <!-- flashを使ったメッセージの表示 -->
+        {% for message in get_flashed_messages() %}
+            <div class="flash">{{ message }}</div>
+        {% endfor %}
+    </div>
+{%- endblock navbar %}
+
+
+{% block content %}
+<div class="container">
+    
+<h1>D3.jsサンプル</h1>
+<button id="update-btn">Update</button>
+<div id="myGraph"></div>
+</div>
+
+<script>
+
+
+function stateJudge (rnd, ax) {
+    // body...
+    var state = null
+    if (rnd < ax){
+        state = true;
+    }else{
+        state = false;
+    }
+    return state
+}
+
+var X = [50,  50]
+var T = 100
+
+var Result = []
+for(t=0; t<T; t++){
+    var divn = []
+    var Y = []
+    for(i=0; i<X.length; i++){
+        // console.log('Loop x['+i+'] ='+X[i])
+        var rnd = Math.floor(Math.random() *100)
+        // console.log(rnd);
+        var state = stateJudge(rnd, X[i]);
+        // console.log(state);
+
+        if (state){
+            divn.push(i)
+            // console.log('分割 & push')
+            // console.log(divn)
+        }
+    }
+    // 要素の分割(indexの削除と追加)
+    console.log('== Add div elem ==')
+    for(var i=0; i<divn.length; i++){
+        // console.log('index number')
+        // console.log(i)
+        var tmp = X[i]
+        X.push(tmp/2)
+        X.push(tmp/2)
+        X[i] = 999
+    }
+    console.log('X='+X)
+    console.log('== Delete dived elem ==')
+    // for (i in X){
+    Y=[]
+    for (var i = 0; i<X.length; i++){
+        // console.log('i= '+i)
+        if (X[i] == 999){
+            X[i] = 88
+        }else{
+            Y.push(X[i])
+            console.log('Y='+X[i])
+        }
+    }
+    console.log('X='+X)
+    console.log('== Cal Result elem ==')
+    console.log('Y='+Y)
+    console.log('end--')
+    X=[]
+    X=Y.concat()
+    console.log('X='+X)
+
+    Result.push(Y)
+}
+
+
+function animation(result) {
+    list = {
+        "name": "jaga",
+        "children": []
+    }
+    console.log('== MAKE Data set =')
+
+    len_x = result.length;
+
+    list.children.push({"name":"t1", "children":[]})
+
+    for(var i=0; i < result.length; i++){
+        a = result[i]
+        list.children[0].children.push({"name":""+a, "households":a})
+    }
+    return list
+}
+
+
+num = 2;
+d3.select("#update-btn").on("click", function(){
+    d3.selectAll("svg").remove();
+    // var result = Result[Result.length-1]
+    var result = Result[num]
+    console.log(result)
+    var alist = animation(result)
+    graphAnim(alist)
+    if (num < Result.length){
+        num ++;
+    }else{
+        num = 1;
+    }
+})
+
+function graphAnim(list){
+
+    //
+    // おまじない
+    //  http://www.openspc2.org/reibun/D3.js/code/graph/bubble-chart/0003/index.html
+    var svgWidth = 480; // SVG領域の横幅
+    var svgHeight = 480;    // SVG領域の縦幅
+    var diameter = 420; // 一番大きい円のサイズ
+
+    var color = ["none", "#ffa0a0", "#a0a0ff", "orange", "#ffe090", "#a0ff90", "cyan", "#ccc", "#ff8080", "#c0ffc0", "#4090ff"];
+
+    svg = d3.select("#myGraph")
+                        .append("svg")
+                        .attr("width", svgWidth)
+                        .attr("height", svgHeight)
+
+    var bubble = d3.layout.pack().size([diameter, diameter]) // 表示サイズを指定
+
+
+    var grp = svg.selectAll("g")    // グループを対象にする
+        .data(bubble.nodes(classes(list)))  // データを読み込む
+        .enter()
+        .append("g")
+        .attr("transform", function(d) {    // 円のX,Y座標を設定
+            return "translate(" + d.x + "," + d.y + ")";
+        })
+
+    grp.append("circle")    // 円を生成する
+        .attr("r", function(d){ // 円を指定した半径にする
+            return d.r;
+        })
+        .attr("fill", function(d,i){    // 塗りの色を指定
+            if(i==0){
+                return color[0];
+            }else{
+                return color[1];
+            }
+        })
+
+    grp.append("text")  // 文字を生成する
+        .attr("font-size", "9pt")   // 文字のサイズを指定する
+        .attr("fill", "black")  // 文字の塗りの色を指定する
+        .style("text-anchor", "middle") // 円の座標の中央から表示するようにする
+        .text(function(d) { return d.className; } ) // データの中のclassNameが地区名なので、それを出力
+
+    // 階層化されたJSONデータをフラット化する (D3.js本家のを少し変更して利用)
+    function classes(root) {
+        var classes = [];
+        function recurse(name, node) {
+            if (node.children) node.children.forEach(function(child) { recurse(node.name, child); });
+                else classes.push({packageName: name, className: node.name, value: node.households});
+        }
+        recurse(null, root);
+        return {children: classes};
+    }
+}
+
+</script>
+</html>
+{% endblock　content %}
+
+
+

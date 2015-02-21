@@ -1,0 +1,99 @@
+<!-- 親となるテンプレートを継承 -->
+{% extends "layout.html" %}
+
+
+<!-- 
+*
+*  カラム右のコンテンツ
+*
+ -->
+<!-- setting -->
+{% set coln = "col-md-3" %}
+{% set levels = ["1", "2", "3", "4", "5"] %}
+
+
+{% block right %}
+    {% if entries %}
+
+        {% for level in levels %}
+            <div class="">
+                <h1>Level: {{ level }}</h1>
+
+                <div class="row">
+                    {% for entry in entries if entry.level|string() == level %}
+                        <div class="{{ coln }}">
+                            <div id="{{ entry.id }}" level="{{ entry.level }}" class="thumbnail entry">
+                                <!-- エントリ一覧の表示 -->
+                                <div class="caption">
+                                    <!-- <h3>{{ entry.title }}</h3> -->
+                                    {#                                    <p>{{ entry.day }}</p>#}
+                                    <p>{{ entry.title }}</p>
+                                    {#                                    <p>{{ entry.why }}</p> #}
+                                    <p>method: {{ entry.method }}</p>
+                                    {#                                    <p>{{ entry.conclusion }}</p> #}
+                                    <p>parent: {{ entry.parent }}</p>
+                                </div>
+                            </div>
+                            <!-- 削除機能の追加 -->
+                            <form action="{{ url_for('rm_entry') }}" method="post" class="rm-entry">
+                                <dl>
+                                    <dd><input type="hidden" name="id" value="{{ entry.id }}"></dd>
+                                    <dd><input type="submit" value="削除">
+                                    </dd>
+                                </dl>
+                            </form>
+                        </div> <!-- col-md-3 -->
+                    {% endfor %}
+                </div>
+                <!-- row -->
+            </div> <!-- .container-fluid -->
+        {% endfor %}
+
+    {% else %}
+        <!-- エントリが存在しない時 -->
+        <li><em>エントリーはまだなにもない…</em>
+    {% endif %}
+{% endblock　right %}
+
+
+{% block scripts %}
+    {{ super() }}
+    <script type="text/javascript">
+        $(function () {
+            $('div.entry').click(function () {
+                // オブジェクト選択時にカラーを変更
+                $(this).css("background-color", "#ccc");
+
+                // フォーム要素のparentプロパティに、選択した要素のid番号を追加
+                var pn = $(this).attr("id")
+                $('.form-parent').val(pn)
+
+                // フォーム要素のlevelプロパティに、選択した要素のlevel+1を追加
+                var child_level = parseInt($(this).attr("level")) + 1
+                $('.form-level').val(child_level)
+
+                // 親情報を取得するためのAjax通信
+                $.getJSON('/_ajax_getEntry', {
+                    // 親要素のid番号
+                    a: parseInt(pn),
+                }, function (data) {
+                    // デバッグ
+                    console.log(data);
+                    $("#result").text(data.result.method);
+                    // 新規入力フォームに親要素の情報を上書き
+                    $(".form-why").val(data.result.title);
+                    $(".form-title").val(data.result.method);
+                });
+
+            });
+            $('div.entry').mouseover(function () {
+                $(this).css("background-color", "#eee");
+            });
+            $('div.entry').mouseout(function () {
+                $(this).css("background-color", "#fff");
+            });
+        });
+
+
+    </script>
+{%- endblock scripts %}
